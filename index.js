@@ -128,14 +128,9 @@ var drawMaze = function(maze, cellSize, ctx) {
     }
   }
 };
-var widthInput = document.createElement("input");
-widthInput.type = "number";
-widthInput.min = "0";
-widthInput.value = "50";
-var heightInput = document.createElement("input");
-heightInput.type = "number";
-heightInput.min = "0";
-heightInput.value = "50";
+var widthInput = document.getElementById("width-input");
+var heightInput = document.getElementById("height-input");
+var cellSizeInput = document.getElementById("cellsize-input");
 var resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 var generateButton = document.createElement("button");
@@ -143,14 +138,15 @@ generateButton.innerText = "Generate Maze";
 var canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 var ctx = canvas.getContext("2d");
-for (const e of [widthInput, heightInput, resizeButton, generateButton, canvas])
+for (const e of [resizeButton, generateButton, canvas])
   document.body.appendChild(e);
-var WIDTH = 50;
-var HEIGHT = 50;
-var CELLSIZE = 10;
+var WIDTH = Number(widthInput.value);
+var HEIGHT = Number(heightInput.value);
+var CELLSIZE = Number(cellSizeInput.value);
 resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
   HEIGHT = Number(heightInput.value);
+  CELLSIZE = Number(cellSizeInput.value);
   resize();
 });
 generateButton.addEventListener("click", (e) => {

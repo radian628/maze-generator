@@ -1,11 +1,10 @@
-const widthInput = document.createElement("input");
-widthInput.type = "number";
-widthInput.min = "0";
-widthInput.value = "50";
-const heightInput = document.createElement("input");
-heightInput.type = "number";
-heightInput.min = "0";
-heightInput.value = "50";
+const widthInput = document.getElementById("width-input")! as HTMLInputElement;
+const heightInput = document.getElementById(
+  "height-input"
+)! as HTMLInputElement;
+const cellSizeInput = document.getElementById(
+  "cellsize-input"
+)! as HTMLInputElement;
 const resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 const generateButton = document.createElement("button");
@@ -14,7 +13,7 @@ const canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 const ctx = canvas.getContext("2d")!;
 
-for (const e of [widthInput, heightInput, resizeButton, generateButton, canvas])
+for (const e of [resizeButton, generateButton, canvas])
   document.body.appendChild(e);
 
 type Cell = {
@@ -25,13 +24,14 @@ type Cell = {
   visited: boolean;
 };
 type Maze = Cell[][];
-let WIDTH = 50;
-let HEIGHT = 50;
-let CELLSIZE = 10;
+let WIDTH = Number(widthInput.value);
+let HEIGHT = Number(heightInput.value);
+let CELLSIZE = Number(cellSizeInput.value);
 
 resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
   HEIGHT = Number(heightInput.value);
+  CELLSIZE = Number(cellSizeInput.value);
   resize();
 });
 
