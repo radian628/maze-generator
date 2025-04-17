@@ -135,10 +135,12 @@ var resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 var generateButton = document.createElement("button");
 generateButton.innerText = "Generate Maze";
+var downloadButton = document.createElement("button");
+downloadButton.innerText = "Download Image";
 var canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 var ctx = canvas.getContext("2d");
-for (const e of [resizeButton, generateButton, canvas])
+for (const e of [resizeButton, generateButton, downloadButton, canvas])
   document.body.appendChild(e);
 var WIDTH = Number(widthInput.value);
 var HEIGHT = Number(heightInput.value);
@@ -152,6 +154,13 @@ resizeButton.addEventListener("click", (e) => {
 generateButton.addEventListener("click", (e) => {
   const maze = createMaze(enabledSquares);
   drawMaze(maze, CELLSIZE, ctx);
+});
+downloadButton.addEventListener("click", (e) => {
+  const img = canvas.toDataURL("image/png", 1);
+  const a = document.createElement("a");
+  a.href = img;
+  a.download = `maze_${WIDTH}x${HEIGHT}.png`;
+  a.click();
 });
 var enabledSquares = [];
 resize();

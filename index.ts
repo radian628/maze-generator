@@ -9,11 +9,13 @@ const resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 const generateButton = document.createElement("button");
 generateButton.innerText = "Generate Maze";
+const downloadButton = document.createElement("button");
+downloadButton.innerText = "Download Image";
 const canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 const ctx = canvas.getContext("2d")!;
 
-for (const e of [resizeButton, generateButton, canvas])
+for (const e of [resizeButton, generateButton, downloadButton, canvas])
   document.body.appendChild(e);
 
 type Cell = {
@@ -38,6 +40,14 @@ resizeButton.addEventListener("click", (e) => {
 generateButton.addEventListener("click", (e) => {
   const maze = createMaze(enabledSquares);
   drawMaze(maze, CELLSIZE, ctx);
+});
+
+downloadButton.addEventListener("click", (e) => {
+  const img = canvas.toDataURL("image/png", 1);
+  const a = document.createElement("a");
+  a.href = img;
+  a.download = `maze_${WIDTH}x${HEIGHT}.png`;
+  a.click();
 });
 
 let enabledSquares: boolean[][] = [];
