@@ -148,10 +148,7 @@ function createMaze(originalPath: boolean[][]) {
     }
   }
 
-  let iters = 0;
-
-  while (potentialEdges.length > 0 && iters < 10000) {
-    iters++;
+  while (potentialEdges.length > 0) {
     const [randEdge] = potentialEdges.splice(
       Math.floor(Math.random() * potentialEdges.length),
       1

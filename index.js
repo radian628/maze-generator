@@ -68,9 +68,7 @@ var createMaze = function(originalPath) {
       }
     }
   }
-  let iters = 0;
-  while (potentialEdges.length > 0 && iters < 1e4) {
-    iters++;
+  while (potentialEdges.length > 0) {
     const [randEdge] = potentialEdges.splice(Math.floor(Math.random() * potentialEdges.length), 1);
     let dirs = getBranchDirections(randEdge.x, randEdge.y);
     if (dirs.length == 0)
