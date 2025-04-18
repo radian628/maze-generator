@@ -50,10 +50,10 @@ var createMaze = function(originalPath) {
     for (let x = 0;x < originalPath[y].length; x++) {
       if (originalPath[y][x]) {
         maze[y].push({
-          up: originalPath[y - 1]?.[x] ?? false,
-          down: originalPath[y + 1]?.[x] ?? false,
-          left: originalPath[y]?.[x - 1] ?? false,
-          right: originalPath[y]?.[x + 1] ?? false,
+          up: originalPath[y - 1]?.[x] ?? true,
+          down: originalPath[y + 1]?.[x] ?? true,
+          left: originalPath[y]?.[x - 1] ?? true,
+          right: originalPath[y]?.[x + 1] ?? true,
           visited: true
         });
         addPotentialEdge(x, y);
@@ -108,9 +108,9 @@ var drawMaze = function(maze, cellSize, ctx) {
     for (let x = 0;x < maze[y].length; x++) {
       const top = y * cellSize;
       const left = x * cellSize;
-      ctx.fillStyle = "#00ff00";
+      ctx.fillStyle = EDGE_COLOR;
       ctx.fillRect(left, top, cellSize, cellSize);
-      ctx.fillStyle = "black";
+      ctx.fillStyle = BACKGROUND_COLOR;
       if (maze[y][x].up) {
         ctx.fillRect(left + 1, top, cellSize - 2, cellSize - 1);
       }
@@ -125,10 +125,26 @@ var drawMaze = function(maze, cellSize, ctx) {
       }
     }
   }
+  for (let y = -1;y < maze.length; y++) {
+    for (let x = -1;x < maze[0].length; x++) {
+      const topLeft = maze[y]?.[x];
+      const bottomLeft = maze[y + 1]?.[x];
+      const topRight = maze[y]?.[x + 1];
+      const bottomRight = maze[y + 1]?.[x + 1];
+      if ((topLeft?.right ?? true) && (topLeft?.down ?? true) && (bottomLeft?.up ?? true) && (bottomLeft?.right ?? true) && (topRight?.left ?? true) && (topRight?.down ?? true) && (bottomRight?.up ?? true) && (bottomRight?.left ?? true)) {
+        const top = y * cellSize;
+        const left = x * cellSize;
+        ctx.fillStyle = BACKGROUND_COLOR;
+        ctx.fillRect(left + cellSize - 1, top + cellSize - 1, 2, 2);
+      }
+    }
+  }
 };
 var widthInput = document.getElementById("width-input");
 var heightInput = document.getElementById("height-input");
 var cellSizeInput = document.getElementById("cellsize-input");
+var backgroundColorInput = document.getElementById("bg-col-input");
+var edgeColorInput = document.getElementById("edge-col-input");
 var resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 var generateButton = document.createElement("button");
@@ -143,6 +159,14 @@ for (const e of [resizeButton, generateButton, downloadButton, canvas])
 var WIDTH = Number(widthInput.value);
 var HEIGHT = Number(heightInput.value);
 var CELLSIZE = Number(cellSizeInput.value);
+var BACKGROUND_COLOR = backgroundColorInput.value;
+var EDGE_COLOR = edgeColorInput.value;
+backgroundColorInput.addEventListener("input", (e) => {
+  BACKGROUND_COLOR = backgroundColorInput.value;
+});
+edgeColorInput.addEventListener("input", (e) => {
+  EDGE_COLOR = edgeColorInput.value;
+});
 resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
   HEIGHT = Number(heightInput.value);

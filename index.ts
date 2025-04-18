@@ -5,6 +5,12 @@ const heightInput = document.getElementById(
 const cellSizeInput = document.getElementById(
   "cellsize-input"
 )! as HTMLInputElement;
+const backgroundColorInput = document.getElementById(
+  "bg-col-input"
+) as HTMLInputElement;
+const edgeColorInput = document.getElementById(
+  "edge-col-input"
+) as HTMLInputElement;
 const resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 const generateButton = document.createElement("button");
@@ -29,6 +35,15 @@ type Maze = Cell[][];
 let WIDTH = Number(widthInput.value);
 let HEIGHT = Number(heightInput.value);
 let CELLSIZE = Number(cellSizeInput.value);
+let BACKGROUND_COLOR = backgroundColorInput.value;
+let EDGE_COLOR = edgeColorInput.value;
+
+backgroundColorInput.addEventListener("input", (e) => {
+  BACKGROUND_COLOR = backgroundColorInput.value;
+});
+edgeColorInput.addEventListener("input", (e) => {
+  EDGE_COLOR = edgeColorInput.value;
+});
 
 resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
@@ -129,10 +144,10 @@ function createMaze(originalPath: boolean[][]) {
     for (let x = 0; x < originalPath[y].length; x++) {
       if (originalPath[y][x]) {
         maze[y].push({
-          up: originalPath[y - 1]?.[x] ?? false,
-          down: originalPath[y + 1]?.[x] ?? false,
-          left: originalPath[y]?.[x - 1] ?? false,
-          right: originalPath[y]?.[x + 1] ?? false,
+          up: originalPath[y - 1]?.[x] ?? true,
+          down: originalPath[y + 1]?.[x] ?? true,
+          left: originalPath[y]?.[x - 1] ?? true,
+          right: originalPath[y]?.[x + 1] ?? true,
           visited: true,
         });
         addPotentialEdge(x, y);
@@ -195,9 +210,9 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
     for (let x = 0; x < maze[y].length; x++) {
       const top = y * cellSize;
       const left = x * cellSize;
-      ctx.fillStyle = "#00ff00";
+      ctx.fillStyle = EDGE_COLOR;
       ctx.fillRect(left, top, cellSize, cellSize);
-      ctx.fillStyle = "black";
+      ctx.fillStyle = BACKGROUND_COLOR;
       if (maze[y][x].up) {
         ctx.fillRect(left + 1, top, cellSize - 2, cellSize - 1);
       }
@@ -209,6 +224,30 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
       }
       if (maze[y][x].right) {
         ctx.fillRect(left + 1, top + 1, cellSize - 1, cellSize - 2);
+      }
+    }
+  }
+
+  for (let y = -1; y < maze.length; y++) {
+    for (let x = -1; x < maze[0].length; x++) {
+      const topLeft = maze[y]?.[x];
+      const bottomLeft = maze[y + 1]?.[x];
+      const topRight = maze[y]?.[x + 1];
+      const bottomRight = maze[y + 1]?.[x + 1];
+      if (
+        (topLeft?.right ?? true) &&
+        (topLeft?.down ?? true) &&
+        (bottomLeft?.up ?? true) &&
+        (bottomLeft?.right ?? true) &&
+        (topRight?.left ?? true) &&
+        (topRight?.down ?? true) &&
+        (bottomRight?.up ?? true) &&
+        (bottomRight?.left ?? true)
+      ) {
+        const top = y * cellSize;
+        const left = x * cellSize;
+        ctx.fillStyle = BACKGROUND_COLOR;
+        ctx.fillRect(left + cellSize - 1, top + cellSize - 1, 2, 2);
       }
     }
   }
