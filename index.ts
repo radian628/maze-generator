@@ -11,6 +11,10 @@ const backgroundColorInput = document.getElementById(
 const edgeColorInput = document.getElementById(
   "edge-col-input"
 ) as HTMLInputElement;
+const completionColorInput = document.getElementById(
+  "completion-col-input"
+) as HTMLInputElement;
+const modeInput = document.getElementById("maze-mode") as HTMLInputElement;
 const resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
 const generateButton = document.createElement("button");
@@ -20,6 +24,9 @@ downloadButton.innerText = "Download Image";
 const canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 const ctx = canvas.getContext("2d")!;
+
+const startMarker = document.getElementById("start-marker")!;
+const endMarker = document.getElementById("end-marker")!;
 
 for (const e of [resizeButton, generateButton, downloadButton, canvas])
   document.body.appendChild(e);
@@ -37,6 +44,7 @@ let HEIGHT = Number(heightInput.value);
 let CELLSIZE = Number(cellSizeInput.value);
 let BACKGROUND_COLOR = backgroundColorInput.value;
 let EDGE_COLOR = edgeColorInput.value;
+let COMPLETION_COLOR = completionColorInput.value;
 
 backgroundColorInput.addEventListener("input", (e) => {
   BACKGROUND_COLOR = backgroundColorInput.value;
@@ -44,11 +52,16 @@ backgroundColorInput.addEventListener("input", (e) => {
 edgeColorInput.addEventListener("input", (e) => {
   EDGE_COLOR = edgeColorInput.value;
 });
+completionColorInput.addEventListener("input", (e) => {
+  COMPLETION_COLOR = completionColorInput.value;
+});
 
 resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
   HEIGHT = Number(heightInput.value);
   CELLSIZE = Number(cellSizeInput.value);
+  startMarker.style.display = "none";
+  endMarker.style.display = "none";
   resize();
 });
 
@@ -86,6 +99,9 @@ resize();
 let clickingCanvas = new Map<number, boolean>();
 let mousePos = { x: 0, y: 0 };
 
+let mazeStartPos = { x: 0, y: 0 };
+let mazeEndPos = { x: 0, y: 0 };
+
 canvas.addEventListener("mousedown", (e) => {
   clickingCanvas.set(e.button, true);
   e.preventDefault();
@@ -108,14 +124,33 @@ canvas.addEventListener("mousemove", (e) => {
 function handleMouseAction() {
   const yCell = Math.floor(mousePos.y / CELLSIZE);
   const xCell = Math.floor(mousePos.x / CELLSIZE);
-  if (clickingCanvas.get(0)) {
-    enabledSquares[yCell][xCell] = true;
-    ctx.fillStyle = "black";
-    ctx.fillRect(xCell * CELLSIZE, yCell * CELLSIZE, CELLSIZE, CELLSIZE);
-  } else if (clickingCanvas.get(2)) {
-    enabledSquares[yCell][xCell] = false;
-    ctx.fillStyle = "white";
-    ctx.fillRect(xCell * CELLSIZE, yCell * CELLSIZE, CELLSIZE, CELLSIZE);
+
+  if (modeInput.value === "maze") {
+    if (clickingCanvas.get(0)) {
+      enabledSquares[yCell][xCell] = true;
+      ctx.fillStyle = "black";
+      ctx.fillRect(xCell * CELLSIZE, yCell * CELLSIZE, CELLSIZE, CELLSIZE);
+    } else if (clickingCanvas.get(2)) {
+      enabledSquares[yCell][xCell] = false;
+      ctx.fillStyle = "white";
+      ctx.fillRect(xCell * CELLSIZE, yCell * CELLSIZE, CELLSIZE, CELLSIZE);
+    }
+  } else if (modeInput.value === "set-start") {
+    if (clickingCanvas.get(0)) {
+      const rect = canvas.getBoundingClientRect();
+      startMarker.style.display = "block";
+      startMarker.style.left = `${rect.left + xCell * CELLSIZE}px`;
+      startMarker.style.top = `${rect.top + yCell * CELLSIZE}px`;
+      mazeStartPos = { x: xCell, y: yCell };
+    }
+  } else {
+    if (clickingCanvas.get(0)) {
+      const rect = canvas.getBoundingClientRect();
+      endMarker.style.display = "block";
+      endMarker.style.left = `${rect.left + xCell * CELLSIZE}px`;
+      endMarker.style.top = `${rect.top + yCell * CELLSIZE}px`;
+      mazeEndPos = { x: xCell, y: yCell };
+    }
   }
 }
 
@@ -249,6 +284,69 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = BACKGROUND_COLOR;
         ctx.fillRect(left + cellSize - 1, top + cellSize - 1, 2, 2);
       }
+    }
+  }
+
+  const pathToExit = findPath(
+    maze,
+    mazeStartPos.x,
+    mazeStartPos.y,
+    mazeEndPos.x,
+    mazeEndPos.y
+  );
+  console.log(pathToExit);
+
+  let pathCell: PathSegment | undefined = pathToExit;
+  while (pathCell) {
+    if (pathCell && pathCell.prev) {
+      ctx.strokeStyle = completionColorInput.value;
+      ctx.beginPath();
+      ctx.moveTo(
+        Math.round((pathCell.x + 0.5) * CELLSIZE) + 0.5,
+        Math.round((pathCell.y + 0.5) * CELLSIZE) + 0.5
+      );
+      ctx.lineTo(
+        Math.round((pathCell.prev.x + 0.5) * CELLSIZE) + 0.5,
+        Math.round((pathCell.prev.y + 0.5) * CELLSIZE) + 0.5
+      );
+      ctx.stroke();
+    }
+
+    pathCell = pathCell?.prev;
+  }
+}
+
+type PathSegment = {
+  x: number;
+  y: number;
+  prev?: PathSegment;
+};
+
+function findPath(maze: Maze, sx: number, sy: number, ex: number, ey: number) {
+  const searchQueue: PathSegment[] = [{ x: sx, y: sy }];
+
+  const visited = new Set<Cell>();
+
+  while (true) {
+    const box = searchQueue.shift();
+    if (!box) return;
+    if (box.x == ex && box.y == ey) {
+      return box;
+    }
+    const cell = maze[box.y][box.x];
+    if (visited.has(cell)) continue;
+    visited.add(cell);
+    if (cell.up && maze[box.y - 1][box.x]) {
+      searchQueue.push({ x: box.x, y: box.y - 1, prev: box });
+    }
+    if (cell.down && maze[box.y + 1][box.x]) {
+      searchQueue.push({ x: box.x, y: box.y + 1, prev: box });
+    }
+    if (cell.left && maze[box.y][box.x - 1]) {
+      searchQueue.push({ x: box.x - 1, y: box.y, prev: box });
+    }
+    if (cell.right && maze[box.y][box.x + 1]) {
+      searchQueue.push({ x: box.x + 1, y: box.y, prev: box });
     }
   }
 }

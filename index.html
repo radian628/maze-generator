@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
-  <head></head>
+  <head>
+    <style>
+      #start-marker,
+      #end-marker {
+        position: absolute;
+        color: red;
+        user-select: none;
+        pointer-events: none;
+      }
+    </style>
+  </head>
   <body>
     <p>
       Left click and drag to mark squares on the maze as part of the "main path"
@@ -21,6 +31,17 @@
     <label>Edge Color</label>
     <input id="edge-col-input" type="color" value="#00FF00" />
     <br />
+    <label>Completion Color</label>
+    <input id="completion-col-input" type="color" value="#FF0000" />
+    <br />
+    <label>Mode</label>
+    <select id="maze-mode">
+      <option value="maze" selected>Draw Path</option>
+      <option value="set-start">Set Start</option>
+      <option value="set-end">Set End</option>
+    </select>
+    <div id="start-marker" style="display: none">Start</div>
+    <div id="end-marker" style="display: none">End</div>
     <script src="index.js"></script>
   </body>
 </html>
