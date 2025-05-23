@@ -287,6 +287,44 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
     }
   }
 
+  let connectingLineX: number = 0;
+  let connectingLineY: number = 0;
+  let hasConnectingLine = false;
+
+  console.log(mazeStartPos.x);
+
+  if (mazeStartPos.x == 0) {
+    hasConnectingLine = true;
+    connectingLineX = 0;
+    connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
+  } else if (mazeStartPos.x == maze[0].length - 1) {
+    hasConnectingLine = true;
+    connectingLineX = (mazeStartPos.x + 1) * CELLSIZE;
+    connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
+  } else if (mazeStartPos.y == 0) {
+    hasConnectingLine = true;
+    connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
+    connectingLineY = 0;
+  } else if (mazeStartPos.y == maze.length - 1) {
+    hasConnectingLine = true;
+    connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
+    connectingLineY = (mazeStartPos.y + 1) * CELLSIZE;
+  }
+
+  if (hasConnectingLine) {
+    ctx.strokeStyle = completionColorInput.value;
+    ctx.beginPath();
+    ctx.moveTo(
+      Math.round(connectingLineX) + 0.5,
+      Math.round(connectingLineY) + 0.5
+    );
+    ctx.lineTo(
+      Math.round((mazeStartPos.x + 0.5) * CELLSIZE) + 0.5,
+      Math.round((mazeStartPos.y + 0.5) * CELLSIZE) + 0.5
+    );
+    ctx.stroke();
+  }
+
   const pathToExit = findPath(
     maze,
     mazeStartPos.x,
@@ -294,7 +332,6 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
     mazeEndPos.x,
     mazeEndPos.y
   );
-  console.log(pathToExit);
 
   let pathCell: PathSegment | undefined = pathToExit;
   while (pathCell) {
