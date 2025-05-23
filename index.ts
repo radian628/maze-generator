@@ -14,6 +14,9 @@ const edgeColorInput = document.getElementById(
 const completionColorInput = document.getElementById(
   "completion-col-input"
 ) as HTMLInputElement;
+const startEndIndexInput = document.getElementById(
+  "start-end-index"
+) as HTMLInputElement;
 const modeInput = document.getElementById("maze-mode") as HTMLInputElement;
 const resizeButton = document.createElement("button");
 resizeButton.innerText = "Resize/Clear";
@@ -24,9 +27,6 @@ downloadButton.innerText = "Download Image";
 const canvas = document.createElement("canvas");
 canvas.style = "border: 1px solid black;";
 const ctx = canvas.getContext("2d")!;
-
-const startMarker = document.getElementById("start-marker")!;
-const endMarker = document.getElementById("end-marker")!;
 
 for (const e of [resizeButton, generateButton, downloadButton, canvas])
   document.body.appendChild(e);
@@ -60,8 +60,9 @@ resizeButton.addEventListener("click", (e) => {
   WIDTH = Number(widthInput.value);
   HEIGHT = Number(heightInput.value);
   CELLSIZE = Number(cellSizeInput.value);
-  startMarker.style.display = "none";
-  endMarker.style.display = "none";
+  mazeStartsAndEnds = [];
+  for (const e of document.querySelectorAll(".start-marker, .end-marker"))
+    e.parentElement?.removeChild(e);
   resize();
 });
 
@@ -99,8 +100,37 @@ resize();
 let clickingCanvas = new Map<number, boolean>();
 let mousePos = { x: 0, y: 0 };
 
-let mazeStartPos = { x: 0, y: 0 };
-let mazeEndPos = { x: 0, y: 0 };
+let mazeStartsAndEnds: {
+  start: {
+    x: number;
+    y: number;
+  };
+  startElement: HTMLElement;
+  end: {
+    x: number;
+    y: number;
+  };
+  endElement: HTMLElement;
+}[] = [];
+
+function makeStartAndEnd(index: number) {
+  const startElement = document.createElement("div");
+  startElement.style.display = "none";
+  startElement.className = "start-marker";
+  startElement.innerText = "Start" + index;
+  document.body.appendChild(startElement);
+  const endElement = document.createElement("div");
+  endElement.style.display = "none";
+  endElement.className = "end-marker";
+  endElement.innerText = "End" + index;
+  document.body.appendChild(endElement);
+  return {
+    start: { x: 0, y: 0 },
+    end: { x: 0, y: 0 },
+    startElement,
+    endElement,
+  };
+}
 
 canvas.addEventListener("mousedown", (e) => {
   clickingCanvas.set(e.button, true);
@@ -125,6 +155,12 @@ function handleMouseAction() {
   const yCell = Math.floor(mousePos.y / CELLSIZE);
   const xCell = Math.floor(mousePos.x / CELLSIZE);
 
+  let startAndEnd = mazeStartsAndEnds[Number(startEndIndexInput.value)];
+  if (!startAndEnd) {
+    startAndEnd = makeStartAndEnd(Number(startEndIndexInput.value));
+    mazeStartsAndEnds[Number(startEndIndexInput.value)] = startAndEnd;
+  }
+
   if (modeInput.value === "maze") {
     if (clickingCanvas.get(0)) {
       enabledSquares[yCell][xCell] = true;
@@ -138,18 +174,18 @@ function handleMouseAction() {
   } else if (modeInput.value === "set-start") {
     if (clickingCanvas.get(0)) {
       const rect = canvas.getBoundingClientRect();
-      startMarker.style.display = "block";
-      startMarker.style.left = `${rect.left + xCell * CELLSIZE}px`;
-      startMarker.style.top = `${rect.top + yCell * CELLSIZE}px`;
-      mazeStartPos = { x: xCell, y: yCell };
+      startAndEnd.startElement.style.display = "block";
+      startAndEnd.startElement.style.left = `${rect.left + xCell * CELLSIZE}px`;
+      startAndEnd.startElement.style.top = `${rect.top + yCell * CELLSIZE}px`;
+      startAndEnd.start = { x: xCell, y: yCell };
     }
   } else {
     if (clickingCanvas.get(0)) {
       const rect = canvas.getBoundingClientRect();
-      endMarker.style.display = "block";
-      endMarker.style.left = `${rect.left + xCell * CELLSIZE}px`;
-      endMarker.style.top = `${rect.top + yCell * CELLSIZE}px`;
-      mazeEndPos = { x: xCell, y: yCell };
+      startAndEnd.endElement.style.display = "block";
+      startAndEnd.endElement.style.left = `${rect.left + xCell * CELLSIZE}px`;
+      startAndEnd.endElement.style.top = `${rect.top + yCell * CELLSIZE}px`;
+      startAndEnd.end = { x: xCell, y: yCell };
     }
   }
 }
@@ -287,69 +323,77 @@ function drawMaze(maze: Maze, cellSize: number, ctx: CanvasRenderingContext2D) {
     }
   }
 
-  let connectingLineX: number = 0;
-  let connectingLineY: number = 0;
-  let hasConnectingLine = false;
+  function addSolution(
+    mazeStartPos: { x: number; y: number },
+    mazeEndPos: { x: number; y: number }
+  ) {
+    let connectingLineX: number = 0;
+    let connectingLineY: number = 0;
+    let hasConnectingLine = false;
 
-  console.log(mazeStartPos.x);
+    if (mazeStartPos.x == 0) {
+      hasConnectingLine = true;
+      connectingLineX = 0;
+      connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
+    } else if (mazeStartPos.x == maze[0].length - 1) {
+      hasConnectingLine = true;
+      connectingLineX = (mazeStartPos.x + 1) * CELLSIZE;
+      connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
+    } else if (mazeStartPos.y == 0) {
+      hasConnectingLine = true;
+      connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
+      connectingLineY = 0;
+    } else if (mazeStartPos.y == maze.length - 1) {
+      hasConnectingLine = true;
+      connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
+      connectingLineY = (mazeStartPos.y + 1) * CELLSIZE;
+    }
 
-  if (mazeStartPos.x == 0) {
-    hasConnectingLine = true;
-    connectingLineX = 0;
-    connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
-  } else if (mazeStartPos.x == maze[0].length - 1) {
-    hasConnectingLine = true;
-    connectingLineX = (mazeStartPos.x + 1) * CELLSIZE;
-    connectingLineY = (mazeStartPos.y + 0.5) * CELLSIZE;
-  } else if (mazeStartPos.y == 0) {
-    hasConnectingLine = true;
-    connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
-    connectingLineY = 0;
-  } else if (mazeStartPos.y == maze.length - 1) {
-    hasConnectingLine = true;
-    connectingLineX = (mazeStartPos.x + 0.5) * CELLSIZE;
-    connectingLineY = (mazeStartPos.y + 1) * CELLSIZE;
-  }
-
-  if (hasConnectingLine) {
-    ctx.strokeStyle = completionColorInput.value;
-    ctx.beginPath();
-    ctx.moveTo(
-      Math.round(connectingLineX) + 0.5,
-      Math.round(connectingLineY) + 0.5
-    );
-    ctx.lineTo(
-      Math.round((mazeStartPos.x + 0.5) * CELLSIZE) + 0.5,
-      Math.round((mazeStartPos.y + 0.5) * CELLSIZE) + 0.5
-    );
-    ctx.stroke();
-  }
-
-  const pathToExit = findPath(
-    maze,
-    mazeStartPos.x,
-    mazeStartPos.y,
-    mazeEndPos.x,
-    mazeEndPos.y
-  );
-
-  let pathCell: PathSegment | undefined = pathToExit;
-  while (pathCell) {
-    if (pathCell && pathCell.prev) {
+    if (hasConnectingLine) {
       ctx.strokeStyle = completionColorInput.value;
       ctx.beginPath();
       ctx.moveTo(
-        Math.round((pathCell.x + 0.5) * CELLSIZE) + 0.5,
-        Math.round((pathCell.y + 0.5) * CELLSIZE) + 0.5
+        Math.round(connectingLineX) + 0.5,
+        Math.round(connectingLineY) + 0.5
       );
       ctx.lineTo(
-        Math.round((pathCell.prev.x + 0.5) * CELLSIZE) + 0.5,
-        Math.round((pathCell.prev.y + 0.5) * CELLSIZE) + 0.5
+        Math.round((mazeStartPos.x + 0.5) * CELLSIZE) + 0.5,
+        Math.round((mazeStartPos.y + 0.5) * CELLSIZE) + 0.5
       );
       ctx.stroke();
     }
 
-    pathCell = pathCell?.prev;
+    const pathToExit = findPath(
+      maze,
+      mazeStartPos.x,
+      mazeStartPos.y,
+      mazeEndPos.x,
+      mazeEndPos.y
+    );
+
+    let pathCell: PathSegment | undefined = pathToExit;
+    while (pathCell) {
+      if (pathCell && pathCell.prev) {
+        ctx.strokeStyle = completionColorInput.value;
+        ctx.beginPath();
+        ctx.moveTo(
+          Math.round((pathCell.x + 0.5) * CELLSIZE) + 0.5,
+          Math.round((pathCell.y + 0.5) * CELLSIZE) + 0.5
+        );
+        ctx.lineTo(
+          Math.round((pathCell.prev.x + 0.5) * CELLSIZE) + 0.5,
+          Math.round((pathCell.prev.y + 0.5) * CELLSIZE) + 0.5
+        );
+        ctx.stroke();
+      }
+
+      pathCell = pathCell?.prev;
+    }
+  }
+
+  for (const path of mazeStartsAndEnds) {
+    if (!path) continue;
+    addSolution(path.start, path.end);
   }
 }
 

@@ -2,8 +2,8 @@
 <html>
   <head>
     <style>
-      #start-marker,
-      #end-marker {
+      .start-marker,
+      .end-marker {
         position: absolute;
         color: red;
         user-select: none;
@@ -34,14 +34,15 @@
     <label>Completion Color</label>
     <input id="completion-col-input" type="color" value="#FF0000" />
     <br />
+    <label>Start/End Index</label>
+    <input id="start-end-index" type="number" value="1" />
+    <br />
     <label>Mode</label>
     <select id="maze-mode">
       <option value="maze" selected>Draw Path</option>
       <option value="set-start">Set Start</option>
       <option value="set-end">Set End</option>
     </select>
-    <div id="start-marker" style="display: none">Start</div>
-    <div id="end-marker" style="display: none">End</div>
     <script src="index.js"></script>
   </body>
 </html>
