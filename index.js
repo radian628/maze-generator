@@ -185,16 +185,16 @@ var findPath = function(maze, sx, sy, ex, ey) {
     if (visited.has(cell))
       continue;
     visited.add(cell);
-    if (cell.up && maze[box.y - 1][box.x]) {
+    if (cell.up && maze[box.y - 1]?.[box.x]) {
       searchQueue.push({ x: box.x, y: box.y - 1, prev: box });
     }
-    if (cell.down && maze[box.y + 1][box.x]) {
+    if (cell.down && maze[box.y + 1]?.[box.x]) {
       searchQueue.push({ x: box.x, y: box.y + 1, prev: box });
     }
-    if (cell.left && maze[box.y][box.x - 1]) {
+    if (cell.left && maze[box.y]?.[box.x - 1]) {
       searchQueue.push({ x: box.x - 1, y: box.y, prev: box });
     }
-    if (cell.right && maze[box.y][box.x + 1]) {
+    if (cell.right && maze[box.y]?.[box.x + 1]) {
       searchQueue.push({ x: box.x + 1, y: box.y, prev: box });
     }
   }
