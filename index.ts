@@ -190,6 +190,13 @@ function handleMouseAction() {
   }
 }
 
+function isSolution(x, y) {
+  return mazeStartsAndEnds.some(
+    ({ start, end }) =>
+      (start.x === x && start.y === y) || (end.x === x && end.y === y)
+  );
+}
+
 function createMaze(originalPath: boolean[][]) {
   const maze: Maze = [];
   const height = originalPath.length;
@@ -213,21 +220,25 @@ function createMaze(originalPath: boolean[][]) {
   for (let y = 0; y < originalPath.length; y++) {
     maze.push([]);
     for (let x = 0; x < originalPath[y].length; x++) {
+      const isSolnUp = isSolution(x, y) && y === 0;
+      const isSolnDown = isSolution(x, y) && y === originalPath.length - 1;
+      const isSolnLeft = isSolution(x, y) && x === 0;
+      const isSolnRight = isSolution(x, y) && x === originalPath[y].length - 1;
       if (originalPath[y][x]) {
         maze[y].push({
-          up: originalPath[y - 1]?.[x] ?? true,
-          down: originalPath[y + 1]?.[x] ?? true,
-          left: originalPath[y]?.[x - 1] ?? true,
-          right: originalPath[y]?.[x + 1] ?? true,
+          up: originalPath[y - 1]?.[x] ?? isSolnUp,
+          down: originalPath[y + 1]?.[x] ?? isSolnDown,
+          left: originalPath[y]?.[x - 1] ?? isSolnLeft,
+          right: originalPath[y]?.[x + 1] ?? isSolnRight,
           visited: true,
         });
         addPotentialEdge(x, y);
       } else {
         maze[y].push({
-          up: false,
-          down: false,
-          left: false,
-          right: false,
+          up: isSolnUp,
+          down: isSolnDown,
+          left: isSolnLeft,
+          right: isSolnRight,
           visited: false,
         });
       }
